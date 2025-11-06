@@ -509,7 +509,7 @@
                         @error('password')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-text">Minimum 8 characters with letters and numbers</div>
+                        <div class="form-text">Minimum 6 characters with letters and numbers</div>
                     </div>
                     <div class="mb-3">
                         <label for="password_confirmation" class="form-label">Confirm Password *</label>
@@ -765,7 +765,7 @@
                 let strength = 'Weak';
                 let color = 'text-danger';
                 
-                if (password.length >= 8) {
+                if (password.length >= 6) {
                     strength = 'Medium';
                     color = 'text-warning';
                 }

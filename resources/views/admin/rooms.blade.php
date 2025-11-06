@@ -1,0 +1,576 @@
+@extends('layouts.admin')
+
+@section('title', 'Room Management')
+
+@section('content')
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Room Management</h1>
+        <!-- <div class="btn-toolbar mb-2 mb-md-0">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                <i class="fas fa-plus me-2"></i> Add New Room
+            </button>
+        </div> -->
+    </div>
+
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
+
+    <!-- Room Summary Cards -->
+    <div class="row mb-4">
+        @php
+            $totalRooms = $rooms->total();
+            $availableRooms = $rooms->where('status', 'available')->count();
+            $occupiedRooms = $rooms->where('status', 'occupied')->count();
+            $maintenanceRooms = $rooms->where('status', 'maintenance')->count();
+        @endphp
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Rooms
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalRooms }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bed fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Available Rooms
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $availableRooms }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-door-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Occupied Rooms
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $occupiedRooms }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-procedures fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Maintenance
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $maintenanceRooms }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tools fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Card -->
+    <div class="card border-primary mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter me-2"></i>Search & Filter
+                    </h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                        <i class="fas fa-filter"></i> Toggle Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="collapse show" id="filterCollapse">
+            <div class="card-body">
+                <form action="{{ route('admin.rooms') }}" method="GET">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="Room number or type..." 
+                                   value="{{ request('search') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="room_type" class="form-label">Room Type</label>
+                            <select class="form-select" id="room_type" name="room_type">
+                                <option value="">All Types</option>
+                                <option value="general" {{ request('room_type') == 'general' ? 'selected' : '' }}>General</option>
+                                <option value="private" {{ request('room_type') == 'private' ? 'selected' : '' }}>Private</option>
+                                <option value="icu" {{ request('room_type') == 'icu' ? 'selected' : '' }}>ICU</option>
+                                <option value="emergency" {{ request('room_type') == 'emergency' ? 'selected' : '' }}>Emergency</option>
+                                <option value="operation-theater" {{ request('room_type') == 'operation-theater' ? 'selected' : '' }}>Operation Theater</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Status</option>
+                                <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
+                                <option value="occupied" {{ request('status') == 'occupied' ? 'selected' : '' }}>Occupied</option>
+                                <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="floor" class="form-label">Floor</label>
+                            <input type="number" class="form-control" id="floor" name="floor" 
+                                   placeholder="Floor number..." 
+                                   value="{{ request('floor') }}">
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-2"></i>Apply Filters
+                            </button>
+                            <a href="{{ route('admin.rooms') }}" class="btn btn-secondary">
+                                <i class="fas fa-refresh me-2"></i>Clear Filters
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Table Card -->
+    <div class="card border-light shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-bed me-2"></i>Room List
+                <span class="badge bg-light text-primary ms-2">{{ $rooms->total() }}</span>
+            </h5>
+            <div class="d-flex align-items-center">
+                <span class="text-light me-3">Showing {{ $rooms->firstItem() ?? 0 }}-{{ $rooms->lastItem() ?? 0 }} of {{ $rooms->total() }}</span>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            @if($rooms->count() > 0)
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0">#</th>
+                            <th class="border-0">Room Number</th>
+                            <th class="border-0">Type</th>
+                            <th class="border-0">Department</th>
+                            <th class="border-0">Floor</th>
+                            <th class="border-0">Capacity</th>
+                            <th class="border-0">Status</th>
+                            <th class="border-0">Price/Day</th>
+                            <th class="border-0 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($rooms as $room)
+                        <tr>
+                            <td>{{ $loop->iteration + ($rooms->currentPage() - 1) * $rooms->perPage() }}</td>
+                            <td>
+                                <strong class="d-block">{{ $room->room_number }}</strong>
+                                @if($room->ward)
+                                    <small class="text-muted">{{ $room->ward }}</small>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-capitalize">
+                                    {{ str_replace('-', ' ', $room->room_type) }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ $room->department->name ?? 'N/A' }}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">Floor {{ $room->floor }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ $room->capacity }}</strong> patients
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    @if($room->status == 'available') bg-success
+                                    @elseif($room->status == 'occupied') bg-warning text-dark
+                                    @elseif($room->status == 'maintenance') bg-danger
+                                    @else bg-info @endif">
+                                    {{ ucfirst($room->status) }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong>₹{{ number_format($room->price_per_day, 2) }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <!-- View Button -->
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#viewRoomModal{{ $room->id }}" 
+                                            title="View Details" data-bs-toggle="tooltip">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+
+                                    <!-- Edit Button -->
+                                    <!-- <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editRoomModal{{ $room->id }}"
+                                            title="Edit Room" data-bs-toggle="tooltip">
+                                        <i class="fas fa-edit"></i>
+                                    </button> -->
+
+                                    <!-- Delete Button -->
+                                    <form action="{{ route('admin.rooms.destroy', $room->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger" 
+                                                title="Delete Room" data-bs-toggle="tooltip"
+                                                onclick="return confirm('Are you sure you want to delete this room? This action cannot be undone.')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- View Room Modal -->
+                        <div class="modal fade" id="viewRoomModal{{ $room->id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-info-circle me-2"></i>Room Details - {{ $room->room_number }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="border-bottom pb-2">Basic Information</h6>
+                                                <p><strong>Room Number:</strong> {{ $room->room_number }}</p>
+                                                <p><strong>Type:</strong> 
+                                                    <span class="badge bg-info text-capitalize">
+                                                        {{ str_replace('-', ' ', $room->room_type) }}
+                                                    </span>
+                                                </p>
+                                                <p><strong>Department:</strong> {{ $room->department->name ?? 'N/A' }}</p>
+                                                <p><strong>Floor:</strong> {{ $room->floor }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="border-bottom pb-2">Room Details</h6>
+                                                <p><strong>Capacity:</strong> {{ $room->capacity }} patients</p>
+                                                <p><strong>Status:</strong> 
+                                                    <span class="badge 
+                                                        @if($room->status == 'available') bg-success
+                                                        @elseif($room->status == 'occupied') bg-warning text-dark
+                                                        @elseif($room->status == 'maintenance') bg-danger
+                                                        @else bg-info @endif">
+                                                        {{ ucfirst($room->status) }}
+                                                    </span>
+                                                </p>
+                                                <p><strong>Price per Day:</strong> ₹{{ number_format($room->price_per_day, 2) }}</p>
+                                                <p><strong>Created:</strong> {{ $room->created_at->format('M d, Y') }}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        @if($room->facilities)
+                                        <div class="row mt-4">
+                                            <div class="col-12">
+                                                <h6 class="border-bottom pb-2">Facilities & Amenities</h6>
+                                                <div class="bg-light p-3 rounded">
+                                                    {{ $room->facilities }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
+
+                                        @if($room->notes)
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <h6 class="border-bottom pb-2">Additional Notes</h6>
+                                                <div class="bg-light p-3 rounded" style="white-space: pre-line;">{{ $room->notes }}</div>
+                                            </div>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="fas fa-times me-2"></i>Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Room Modal -->
+                        <div class="modal fade" id="editRoomModal{{ $room->id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-warning text-dark">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-edit me-2"></i>Edit Room - {{ $room->room_number }}
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="{{ route('admin.rooms.update', $room->id) }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="modal-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Room Number *</label>
+                                                        <input type="text" class="form-control" name="room_number" value="{{ $room->room_number }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Room Type *</label>
+                                                        <select class="form-select" name="room_type" required>
+                                                            <option value="general" {{ $room->room_type == 'general' ? 'selected' : '' }}>General</option>
+                                                            <option value="private" {{ $room->room_type == 'private' ? 'selected' : '' }}>Private</option>
+                                                            <option value="semi-private" {{ $room->room_type == 'semi-private' ? 'selected' : '' }}>Semi-Private</option>
+                                                            <option value="deluxe" {{ $room->room_type == 'deluxe' ? 'selected' : '' }}>Deluxe</option>
+                                                            <option value="icu" {{ $room->room_type == 'icu' ? 'selected' : '' }}>ICU</option>
+                                                            <option value="operation" {{ $room->room_type == 'operation' ? 'selected' : '' }}>Operation Theater</option>
+                                                            <option value="emergency" {{ $room->room_type == 'emergency' ? 'selected' : '' }}>Emergency</option>
+                                                            <option value="maternity" {{ $room->room_type == 'maternity' ? 'selected' : '' }}>Maternity</option>
+                                                            <option value="recovery" {{ $room->room_type == 'recovery' ? 'selected' : '' }}>Recovery</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Department *</label>
+                                                        <select class="form-select" name="department_id" required>
+                                                            <option value="">Select Department</option>
+                                                            @foreach($departments as $department)
+                                                                <option value="{{ $department->id }}" {{ $room->department_id == $department->id ? 'selected' : '' }}>
+                                                                    {{ $department->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Floor *</label>
+                                                        <input type="number" class="form-control" name="floor" value="{{ $room->floor }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Capacity *</label>
+                                                        <input type="number" class="form-control" name="capacity" value="{{ $room->capacity }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Price per Day (₹) *</label>
+                                                        <input type="number" class="form-control" name="price_per_day" value="{{ $room->price_per_day }}" step="0.01" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Status *</label>
+                                                        <select class="form-select" name="status" required>
+                                                            <option value="available" {{ $room->status == 'available' ? 'selected' : '' }}>Available</option>
+                                                            <option value="occupied" {{ $room->status == 'occupied' ? 'selected' : '' }}>Occupied</option>
+                                                            <option value="maintenance" {{ $room->status == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                                                            <option value="cleaning" {{ $room->status == 'cleaning' ? 'selected' : '' }}>Cleaning</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Facilities</label>
+                                                        <textarea class="form-control" name="facilities" rows="3" placeholder="List of facilities and amenities">{{ $room->facilities }}</textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Additional Notes</label>
+                                                        <textarea class="form-control" name="notes" rows="2" placeholder="Any additional notes">{{ $room->notes }}</textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                <i class="fas fa-times me-2"></i>Cancel
+                                            </button>
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="fas fa-save me-2"></i>Update Room
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                <div class="text-muted">
+                    Showing {{ $rooms->firstItem() }} to {{ $rooms->lastItem() }} of {{ $rooms->total() }} entries
+                </div>
+                <div>
+                    {{ $rooms->links('pagination::bootstrap-5') }}
+                </div>
+            </div>
+            @else
+            <div class="text-center py-5">
+                <i class="fas fa-bed fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Rooms Found</h4>
+                <p class="text-muted">
+                    @if(request()->anyFilled(['search', 'room_type', 'status', 'floor']))
+                        No rooms match your search criteria.
+                    @else
+                        No rooms have been added yet.
+                    @endif
+                </p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                    <i class="fas fa-plus me-1"></i>Add New Room
+                </button>
+                @if(request()->anyFilled(['search', 'room_type', 'status', 'floor']))
+                <a href="{{ route('admin.rooms') }}" class="btn btn-secondary">
+                    <i class="fas fa-refresh me-1"></i>Clear Filters
+                </a>
+                @endif
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Add Room Modal -->
+<div class="modal fade" id="addRoomModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add New Room
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ route('admin.rooms.store') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Room Number *</label>
+                                <input type="text" class="form-control" name="room_number" required placeholder="Enter room number">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Room Type *</label>
+                                <select class="form-select" name="room_type" required>
+                                    <option value="general">General</option>
+                                    <option value="private">Private</option>
+                                    <option value="semi-private">Semi-Private</option>
+                                    <option value="deluxe">Deluxe</option>
+                                    <option value="icu">ICU</option>
+                                    <option value="operation">Operation Theater</option>
+                                    <option value="emergency">Emergency</option>
+                                    <option value="maternity">Maternity</option>
+                                    <option value="recovery">Recovery</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Department *</label>
+                                <select class="form-select" name="department_id" required>
+                                    <option value="">Select Department</option>
+                                    @foreach($departments as $department)
+                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Floor *</label>
+                                <input type="number" class="form-control" name="floor" required placeholder="Floor number">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Capacity *</label>
+                                <input type="number" class="form-control" name="capacity" required placeholder="Number of patients">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Price per Day (₹) *</label>
+                                <input type="number" class="form-control" name="price_per_day" step="0.01" required placeholder="0.00">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Status *</label>
+                                <select class="form-select" name="status" required>
+                                    <option value="available">Available</option>
+                                    <option value="occupied">Occupied</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="cleaning">Cleaning</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Facilities</label>
+                                <textarea class="form-control" name="facilities" rows="3" placeholder="List of facilities and amenities"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Additional Notes</label>
+                                <textarea class="form-control" name="notes" rows="2" placeholder="Any additional notes"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Add Room
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
